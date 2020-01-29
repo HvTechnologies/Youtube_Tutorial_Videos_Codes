@@ -1,0 +1,188 @@
+XML --- 
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SignUp">
+
+    <EditText
+        android:id="@+id/EmailTxt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:ems="10"
+        android:hint="Email "
+        android:inputType="textEmailAddress"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView4" />
+
+    <EditText
+        android:id="@+id/PassTxt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:ems="10"
+        android:hint="Password"
+        android:inputType="textPassword"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/EmailTxt" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:text="Sign Up"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:layout_marginBottom="32dp"
+        android:text="@android:string/ok"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/PassTxt" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+JAVA ---
+
+
+	Button OK ;
+    EditText Email , Pass ;
+
+    FirebaseAuth mAuth ;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_sign_up);
+
+
+        mAuth = FirebaseAuth.getInstance();
+
+        OK = (Button)findViewById(R.id.button3);
+        Email = (EditText) findViewById(R.id.EmailTxt);
+        Pass = (EditText)findViewById(R.id.PassTxt);
+
+        OK.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                
+                if(!Email.getText().toString().isEmpty() && !Pass.getText().toString().isEmpty()){
+                            mAuth.createUserWithEmailAndPassword(Email.getText().toString(),Pass.getText().toString()).addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<AuthResult> task) {
+                            if(task.isSuccessful()){
+                                
+                                final String user_id = task.getResult().getUser().getUid();
+                                Toast.makeText(SignUp.this , "User Id -" + user_id , Toast.LENGTH_SHORT).show();
+                                final FirebaseUser useremail = task.getResult().getUser();
+                                useremail.sendEmailVerification().addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+
+                                        if(task.isSuccessful()){
+                                            Toast.makeText(SignUp.this, "Email Verification Sent" , Toast.LENGTH_SHORT).show();
+                                        }else {
+                                            Toast.makeText(SignUp.this, "Email Does Not Exist" , Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
+
+                                Intent mainIntent = new Intent(SignUp.this, LoggedInActivity.class);
+                                mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(mainIntent);
+                                finish();
+
+
+                            }else{
+
+                                try
+                                {
+                                    throw task.getException();
+                                }
+                                // if user enters wrong email.
+                                catch (FirebaseAuthWeakPasswordException weakPassword)
+                                {
+                                    Toast.makeText(SignUp.this, "Weak Password" ,
+                                            Toast.LENGTH_SHORT).show();
+
+
+                                }
+                                // if user enters wrong password.
+                                catch (FirebaseAuthInvalidCredentialsException malformedEmail)
+                                {
+                                    Toast.makeText(SignUp.this, "Malformed Email",
+                                            Toast.LENGTH_SHORT).show();
+
+
+
+                                }
+                                catch (FirebaseAuthUserCollisionException existEmail)
+                                {
+                                    Toast.makeText(SignUp.this, "Email Already Exist" ,
+                                            Toast.LENGTH_SHORT).show();
+
+
+                                }
+                                catch (Exception e)
+                                {
+                                    Toast.makeText(SignUp.this,  e.getMessage() ,
+                                            Toast.LENGTH_SHORT).show();
+
+                                }
+
+                            }
+
+
+                        }
+                    });
+
+
+
+
+
+
+
+                }
+
+
+
+            }
+        });
+
+
+
+    }

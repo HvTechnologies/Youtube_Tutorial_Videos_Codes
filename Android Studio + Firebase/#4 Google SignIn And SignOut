@@ -1,0 +1,193 @@
+DEPENDENCY --
+
+implementation 'com.google.firebase:firebase-auth:19.2.0'
+implementation 'com.google.android.gms:play-services-auth:17.0.0'
+
+
+XML CODE FOR GOOGLE BUTTON--
+
+			<com.google.android.gms.common.SignInButton
+                android:id="@+id/LoginActBtn"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/linelay1"
+                android:layout_marginTop="20dp"
+                android:background="@color/colorBlack"
+                android:textColor="@color/colorBlack" />
+				
+				
+				
+JAVA --
+
+
+	SignInButton Login ;
+	FirebaseAuth mAuth ;
+
+    GoogleSignInClient mGoogle ;
+    public static int RC_SIGN_IN = 1 ;
+
+
+
+
+	@Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        Login = (SignInButton) findViewById(R.id.LoginActBtn);
+        mAuth = FirebaseAuth.getInstance();
+
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+
+        mGoogle = GoogleSignIn.getClient(MainActivity.this , gso);
+        Login.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                signIn();
+            }
+        });
+
+
+
+    }
+
+
+
+    private void signIn() {
+        Intent signInIntent = mGoogle.getSignInIntent();
+        startActivityForResult(signInIntent, RC_SIGN_IN);
+
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+        if (requestCode == RC_SIGN_IN) {
+            Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
+            try {
+                // Google Sign In was successful, authenticate with Firebase
+                GoogleSignInAccount account = task.getResult(ApiException.class);
+                firebaseAuthWithGoogle(account);
+            } catch (ApiException e) {
+                // Google Sign In failed, update UI appropriately
+                //Log.w(TAG, "Google sign in failed", e);
+                // ...
+            }
+        }
+    }
+
+
+    private void firebaseAuthWithGoogle(GoogleSignInAccount acct) {
+
+        AuthCredential credential = GoogleAuthProvider.getCredential(acct.getIdToken(), null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+
+                            Toast.makeText(MainActivity.this ,"signInWithCredential:success" , Toast.LENGTH_SHORT ).show();
+                            Intent mainIntent = new Intent(MainActivity.this, Main2Activity.class);
+                            mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(mainIntent);
+                            finish();
+
+                        } else {
+
+                            Toast.makeText(MainActivity.this ,"Failed" , Toast.LENGTH_SHORT ).show();
+
+
+                        }
+
+                    }
+                });
+
+    }
+
+
+
+SignOut ----
+
+
+XML -- 
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".LoggedInActivity">
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="320dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginRight="32dp"
+        android:text="LOGGED IN"
+        android:textSize="30sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/SignOut"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="32dp"
+        android:text="LOGOUT"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+Java -- 
+
+
+    Button SignOut ;
+    FirebaseAuth mAuth ;
+
+    GoogleSignInClient mGoogle ;
+      
+    mAuth = FirebaseAuth.getInstance();
+ 
+   GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+
+        mGoogle = GoogleSignIn.getClient(Main2Activity.this , gso);
+        SignOut = (Button)findViewById(R.id.SignOut);
+
+        SignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                mGoogle.signOut();
+                mAuth.signOut();
+                Intent mainIntent = new Intent(Main2Activity.this, MainActivity.class);
+                mainIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(mainIntent);
+                finish();
+
+            }
+        });
+
+
+
+
+
